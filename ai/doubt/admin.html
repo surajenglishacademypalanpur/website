@@ -112,6 +112,7 @@
     .btn-secondary:hover {
       background-color: #f7f4ed;
       color: var(--primary-dark);
+      border-color: var(--primary);
     }
 
     /* Auth Screen CSS */
@@ -195,7 +196,7 @@
 
     /* Main Grid Layout */
     .admin-dashboard-container {
-      display: none; /* Shown after auth verification */
+      display: none;
       flex: 1;
       padding: 30px;
       max-width: 1300px;
@@ -208,12 +209,6 @@
       grid-template-columns: 380px 1fr;
       gap: 30px;
       align-items: start;
-    }
-
-    @media (max-width: 900px) {
-      .dashboard-grid {
-        grid-template-columns: 1fr;
-      }
     }
 
     .card {
@@ -338,11 +333,6 @@
       justify-content: space-between;
       align-items: center;
       animation: fadeIn 0.2s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
     }
 
     .toolbar-info {
@@ -769,10 +759,9 @@
     let selectedUids = new Set();
     let csvDataParsed = [];
 
-    // Check Authentication state
+    // Authenticated state check
     auth.onAuthStateChanged(user => {
       if (user) {
-        // Run verify list
         runVerification();
       } else {
         showAuthGate();
@@ -793,7 +782,7 @@
       document.getElementById("dashboardSub").textContent = "Admin Dashboard";
     }
 
-    // Admin login
+    // Admin email/password login submit
     adminLoginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       authError.style.display = "none";
@@ -803,7 +792,7 @@
       try {
         await auth.signInWithEmailAndPassword(email, password);
       } catch (error) {
-        console.error("Admin signin error:", error);
+        console.error("Admin login error:", error);
         authError.textContent = error.message || "Failed to log in.";
         authError.style.display = "block";
       }
@@ -816,13 +805,12 @@
       });
     });
 
-    // Run verification on authorization
+    // Verification check for administrators in DB
     async function runVerification() {
       try {
         const listFn = functions.httpsCallable("list_students");
-        await listFn(); // Triggers check_admin logic in function
+        await listFn();
         
-        // Success: is admin
         showDashboard();
         loadDashboardData();
       } catch (err) {
@@ -838,15 +826,13 @@
       }
     }
 
-    // Load initial states
     async function loadDashboardData() {
       fetchStudents();
       fetchBotStatus();
       fetchAppSettings();
     }
 
-    // --- Student Directory Operations ---
-
+    // --- Directory Listings ---
     async function fetchStudents() {
       try {
         const listFn = functions.httpsCallable("list_students");
@@ -872,7 +858,7 @@
       studentsData.forEach(student => {
         const tr = document.createElement("tr");
 
-        // Checkbox column
+        // Select checkbox
         const tdCheck = document.createElement("td");
         tdCheck.style.textAlign = "center";
         const chk = document.createElement("input");
@@ -888,15 +874,15 @@
         });
         tdCheck.appendChild(chk);
 
-        // Enrollment
+        // Enrollment number
         const tdEnroll = document.createElement("td");
         tdEnroll.textContent = student.enrollment_number;
 
-        // Email
+        // Email address
         const tdEmail = document.createElement("td");
         tdEmail.textContent = student.email;
 
-        // Status badge
+        // Block status badge
         const tdStatus = document.createElement("td");
         const badge = document.createElement("span");
         badge.classList.add("badge");
@@ -909,10 +895,9 @@
         }
         tdStatus.appendChild(badge);
 
-        // Action Buttons
+        // Individual control actions
         const tdActions = document.createElement("td");
         
-        // Toggle Block Button
         const blockBtn = document.createElement("button");
         blockBtn.classList.add("btn", "btn-secondary");
         blockBtn.style.padding = "4px 8px";
@@ -921,7 +906,6 @@
         blockBtn.textContent = student.blocked ? "Unblock" : "Block";
         blockBtn.addEventListener("click", () => handleToggleBlock(student.uid, !student.blocked));
 
-        // Delete Button
         const delBtn = document.createElement("button");
         delBtn.classList.add("btn", "btn-danger");
         delBtn.style.padding = "4px 8px";
@@ -987,7 +971,7 @@
       }
     }
 
-    // Bulk Delete
+    // Bulk Delete selected
     bulkDeleteBtn.addEventListener("click", async () => {
       const count = selectedUids.size;
       if (count === 0) return;
@@ -1026,8 +1010,7 @@
       }
     });
 
-    // --- CSV Batch Processing ---
-
+    // --- CSV Batch File Reading ---
     csvFileInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -1048,13 +1031,12 @@
         return;
       }
 
-      // Check header
       const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
       const enrollIdx = headers.indexOf("enrollment_number");
       const passIdx = headers.indexOf("password");
 
       if (enrollIdx === -1 || passIdx === -1) {
-        alert("Invalid CSV headers. Must contain exactly 'enrollment_number' and 'password' columns.");
+        alert("Invalid CSV headers. Must contain 'enrollment_number' and 'password' columns.");
         resetCSVInput();
         return;
       }
@@ -1064,7 +1046,7 @@
 
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
-        if (!line) continue; // Skip blank lines
+        if (!line) continue;
         
         const cols = line.split(",");
         const enrollment = cols[enrollIdx] ? cols[enrollIdx].trim() : "";
@@ -1087,7 +1069,6 @@
         return;
       }
 
-      // Render preview
       csvCount.textContent = csvDataParsed.length;
       csvDataParsed.slice(0, 5).forEach(row => {
         const tr = document.createElement("tr");
@@ -1167,12 +1148,10 @@
     });
 
     // --- Bot Status Toggle Operations ---
-
     async function fetchBotStatus() {
       try {
         const botStatusFn = functions.httpsCallable("get_bot_status");
         const res = await botStatusFn();
-        
         updateBotStatusUI(res.data);
       } catch (err) {
         console.error("Failed to load bot status:", err);
@@ -1207,7 +1186,6 @@
     }
 
     botToggle.addEventListener("change", async (e) => {
-      // If toggled ON, turn on immediately
       if (e.target.checked) {
         try {
           const statusFn = functions.httpsCallable("set_bot_status");
@@ -1218,7 +1196,6 @@
           botToggle.checked = false;
         }
       } else {
-        // Show configuration panel for turning off
         botStatusCard.classList.add("off");
         botStatusLabel.textContent = "AI Bot: OFF";
         botOffPanel.style.display = "block";
@@ -1230,7 +1207,6 @@
       let untilVal = null;
       
       if (disabledUntil.value) {
-        // Convert to ISO string
         untilVal = new Date(disabledUntil.value).toISOString();
       }
 
@@ -1245,8 +1221,7 @@
       }
     });
 
-    // --- App Settings Operations ---
-
+    // --- App Configuration parameters ---
     async function fetchAppSettings() {
       try {
         const settingsFn = functions.httpsCallable("get_app_settings");
@@ -1289,8 +1264,7 @@
       }
     });
 
-    // --- Feedback Helpers ---
-
+    // --- Feedback UI helper ---
     function showFeedback(element, message, type) {
       element.textContent = message;
       element.className = `alert alert-${type}`;
@@ -1334,7 +1308,7 @@
       });
     });
 
-    // Initialize the active tab
+    // Initialize active directory tab
     switchTab("directory");
   </script>
 </body>
