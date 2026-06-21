@@ -224,7 +224,6 @@
       box-shadow: 0 2px 6px rgba(52, 88, 64, 0.05);
     }
 
-    /* Bold tags styling inside bot bubbles */
     .message.bot strong {
       color: var(--primary-dark);
       font-weight: 600;
@@ -238,7 +237,7 @@
       margin-bottom: 4px;
     }
 
-    /* Notification & System banners */
+    /* Banners */
     .banner {
       width: 100%;
       padding: 16px;
@@ -291,7 +290,7 @@
       background-color: var(--primary);
       border-radius: 50%;
       display: inline-block;
-      animation: bounce 1.3s infinite ease-in-out;
+      animation: bounce infinite 1.3s ease-in-out;
     }
 
     .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
@@ -374,7 +373,7 @@
       transform: none;
     }
 
-    /* Inline custom error bar */
+    /* Error Toast */
     .error-toast {
       background-color: #fde8e8;
       border: 1px solid #f8b4b4;
@@ -387,15 +386,17 @@
       margin: 10px 24px 0 24px;
     }
 
-    /* Menu styles */
+    /* Hamburger Menu Styles */
     .desktop-buttons {
       display: flex;
       gap: 12px;
     }
+
     .mobile-menu-wrapper {
       display: none;
       position: relative;
     }
+
     .menu-toggle-btn {
       background: none;
       border: none;
@@ -406,6 +407,7 @@
       padding: 10px;
       z-index: 1000;
     }
+
     .menu-toggle-btn span {
       display: block;
       width: 22px;
@@ -414,15 +416,19 @@
       border-radius: 2px;
       transition: var(--transition);
     }
+
     .menu-toggle-btn.active span:nth-child(1) {
       transform: translateY(7px) rotate(45deg);
     }
+
     .menu-toggle-btn.active span:nth-child(2) {
       opacity: 0;
     }
+
     .menu-toggle-btn.active span:nth-child(3) {
       transform: translateY(-7px) rotate(-45deg);
     }
+
     .mobile-dropdown-menu {
       display: none;
       position: absolute;
@@ -437,9 +443,16 @@
       overflow: hidden;
       animation: fadeIn 0.2s ease;
     }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     .mobile-dropdown-menu.show {
       display: block;
     }
+
     .dropdown-item {
       width: 100%;
       padding: 12px 16px;
@@ -447,24 +460,27 @@
       border: none;
       background: none;
       font-size: 0.92rem;
-      font-weight: 550;
+      font-weight: 555;
       color: var(--text);
       cursor: pointer;
       font-family: inherit;
     }
+
     .dropdown-item:hover {
       background-color: var(--primary-light);
       color: var(--primary-dark);
     }
+
     .dropdown-item.logout {
       border-top: 1px solid var(--border-color);
       color: #b94a48;
     }
+
     .dropdown-item.logout:hover {
       background-color: #fde8e8;
     }
 
-    /* Mobile Responsive Optimizations */
+    /* Mobile Responsive Customizations */
     @media (max-width: 600px) {
       header {
         padding: 10px 15px;
@@ -498,7 +514,7 @@
         padding: 10px 14px;
       }
       .chat-input-bar {
-        padding: 12px 15px calc(28px + env(safe-area-inset-bottom)) 15px; /* Optimized lower padding */
+        padding: 12px 15px calc(28px + env(safe-area-inset-bottom)) 15px; /* Spaced safety region */
         gap: 8px;
         background-color: #ffffff;
       }
@@ -529,6 +545,7 @@
         <button id="clearChatBtn" class="btn-secondary">Clear Chat</button>
         <button id="logoutBtn" class="btn-logout">Logout</button>
       </div>
+      
       <div class="mobile-menu-wrapper">
         <button id="menuToggleBtn" class="menu-toggle-btn" aria-label="Open Menu">
           <span></span>
@@ -548,10 +565,10 @@
       <div id="errorToast" class="error-toast"></div>
       
       <div class="messages-stream" id="messagesStream">
-        <!-- Initial friendly welcome will be injected here on load -->
+        <!-- Welcoming dialogue will be injected dynamically -->
       </div>
       
-      <!-- Loading Dots -->
+      <!-- Typing indicator animation -->
       <div class="typing-indicator" id="typingIndicator">
         <span></span><span></span><span></span>
       </div>
@@ -590,13 +607,12 @@
     let currentUser = null;
     let localHistoryKey = "";
 
-    // Check auth state
+    // Authenticated state listener
     auth.onAuthStateChanged(user => {
       if (!user) {
-        // Not logged in, redirect to login
         window.location.href = "login.html";
       } else {
-        // Redirect to admin panel if the authenticated user is an administrator
+        // Stop student users if logged as admin
         if (user.email && !user.email.endsWith("@surajenglishacademy.in")) {
           window.location.href = "admin.html";
           return;
@@ -607,7 +623,7 @@
       }
     });
 
-    // Logout
+    // Logout triggers
     function handleLogout() {
       mobileDropdown.classList.remove("show");
       menuToggleBtn.classList.remove("active");
@@ -618,7 +634,7 @@
     logoutBtn.addEventListener("click", handleLogout);
     logoutBtnMobile.addEventListener("click", handleLogout);
 
-    // Mobile Hamburger menu toggle
+    // Dropdown triggers
     menuToggleBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       mobileDropdown.classList.toggle("show");
@@ -630,18 +646,15 @@
       menuToggleBtn.classList.remove("active");
     });
 
-    // Custom Markdown Formatting
+    // Formatting markdown helper (bold ** and bullet points - )
     function formatMarkdown(text) {
-      // Escape HTML to prevent XSS
       let html = text
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
 
-      // Format bold text: **text**
       html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
 
-      // Split lines and format bullet lists correctly
       const lines = html.split("\n");
       let inList = false;
       let formattedLines = [];
@@ -669,7 +682,7 @@
       return formattedLines.join("<br>");
     }
 
-    // Load Local Storage Chat History
+    // Storage history functions
     function loadLocalHistory() {
       messagesStream.innerHTML = "";
       const stored = localStorage.getItem(localHistoryKey);
@@ -681,7 +694,7 @@
             appendMessage(msg.role, msg.text, false);
           });
         } catch (e) {
-          console.error("Error parsing chat history:", e);
+          console.error("Failed to parse local history:", e);
           showWelcomeMessage();
         }
       } else {
@@ -691,11 +704,10 @@
     }
 
     function showWelcomeMessage() {
-      const welcome = "Hello! 👋 I am Suraj, your automated English Grammar Assistant built by Suraj English Academy, Palanpur. What grammar doubt can I help you solve today?";
+      const welcome = "Hello! 👋 I am Suraj, your automated English Grammar Assistant built by Devansh Joshi for Suraj ENglish Academy, Palanpur. What grammar doubt can I help you solve today?";
       appendMessage("model", welcome, true);
     }
 
-    // Save Chat History to Local Storage (cap at 50)
     function saveLocalHistory(role, text) {
       if (!localHistoryKey) return;
       let messages = [];
@@ -710,7 +722,6 @@
       
       messages.push({ role, text });
       
-      // Cap at 50 messages
       if (messages.length > 50) {
         messages = messages.slice(messages.length - 50);
       }
@@ -718,7 +729,6 @@
       localStorage.setItem(localHistoryKey, JSON.stringify(messages));
     }
 
-    // Clear local chat screen
     function handleClearChat() {
       mobileDropdown.classList.remove("show");
       menuToggleBtn.classList.remove("active");
@@ -730,7 +740,7 @@
     clearChatBtn.addEventListener("click", handleClearChat);
     clearChatBtnMobile.addEventListener("click", handleClearChat);
 
-    // Append Message to UI
+    // Element rendering helpers
     function appendMessage(role, text, save = true) {
       const msgDiv = document.createElement("div");
       msgDiv.classList.add("message");
@@ -749,12 +759,10 @@
       }
     }
 
-    // Scroll to bottom of chat
     function scrollToBottom() {
       messagesStream.scrollTop = messagesStream.scrollHeight;
     }
 
-    // Show system banner
     function appendSystemBanner(type, title, description) {
       const banner = document.createElement("div");
       banner.classList.add("banner", type);
@@ -772,7 +780,6 @@
       scrollToBottom();
     }
 
-    // Show inline temporary toast
     function showToast(message) {
       errorToast.textContent = message;
       errorToast.style.display = "block";
@@ -801,7 +808,7 @@
       chatInput.placeholder = "Chat input has been disabled.";
     }
 
-    // Send doubt trigger
+    // Call query submit
     async function handleSend() {
       const text = chatInput.value.trim();
       if (!text) return;
@@ -826,16 +833,12 @@
           disableChatCompletely();
           isBlocked = true;
         } else if (responseData.limit_reached) {
-          // Display limit reached notice
           appendMessage("model", responseData.reply);
         } else {
-          // Normal bot response
           appendMessage("model", responseData.reply);
         }
       } catch (error) {
-        console.error("Error from callable function:", error);
-        
-        // Handle specific permission-denied code (means blocked user)
+        console.error("Error calling chat function:", error);
         if (error.code === "permission-denied") {
           appendSystemBanner(
             "blocked",
@@ -845,7 +848,6 @@
           disableChatCompletely();
           isBlocked = true;
         } else {
-          // Normal error fallback - NO AUTO RETRY
           showToast(error.message || "Something went wrong. Please check your internet and try again.");
         }
       } finally {
