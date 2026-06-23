@@ -581,9 +581,9 @@
           </div>
 
           <div class="settings-group">
-            <label for="settingsModel">Gemini model name</label>
+            <label for="settingsModel">Groq model name</label>
             <input type="text" id="settingsModel" class="form-control" required>
-            <span class="helper-text">Must be a valid active Gemini API model.</span>
+            <span class="helper-text">Must be a valid active Groq model (e.g. llama-3.1-8b-instant).</span>
           </div>
 
           <div class="settings-group">
@@ -609,6 +609,15 @@
               <label for="newPassword">Initial Password</label>
               <input type="text" id="newPassword" class="form-control" minlength="6" placeholder="At least 6 characters" required>
             </div>
+            <div class="form-group">
+              <label for="newStandard">Standard</label>
+              <select id="newStandard" class="form-control" required>
+                <option value="" disabled selected>Select standard</option>
+                <option value="08">Standard 08</option>
+                <option value="09">Standard 09</option>
+                <option value="10">Standard 10</option>
+              </select>
+            </div>
             <button type="submit" class="btn btn-primary" style="width:100%;">Create Account</button>
           </form>
         </div>
@@ -617,7 +626,8 @@
         <div class="card tab-content-card" data-tab-group="import">
           <h3>CSV Bulk Upload</h3>
           <p class="helper-text" style="margin-bottom:12px; font-size:0.82rem; line-height:1.4;">
-            Import CSV file with headers: <code>enrollment_number,password</code>. Maximum 300 entries per file.
+            Import CSV file with headers: <code>enrollment_number,password,standard</code>. Standard must be <code>08</code>, <code>09</code>, or <code>10</code>. Maximum 300 entries per file.
+            <br><a href="demo.csv" download style="color:var(--primary); font-weight:600;">⬇ Download demo.csv template</a>
           </p>
           
           <input type="file" id="csvFileInput" class="form-control" accept=".csv" style="padding:6px;">
@@ -629,6 +639,7 @@
                 <thead>
                   <tr>
                     <th>Enrollment</th>
+                    <th>Std</th>
                     <th>Password</th>
                   </tr>
                 </thead>
@@ -683,6 +694,7 @@
                 <tr>
                   <th style="width:40px; text-align:center;"><input type="checkbox" id="selectAllCheckbox"></th>
                   <th>Enrollment Number</th>
+                  <th>Std</th>
                   <th>Email Address</th>
                   <th>Status</th>
                   <th>Actions</th>
@@ -690,7 +702,7 @@
               </thead>
               <tbody id="studentTableBody">
                 <tr>
-                  <td colspan="5" style="text-align:center; color:var(--text-muted);">Fetching students list...</td>
+                  <td colspan="6" style="text-align:center; color:var(--text-muted);">Fetching students list...</td>
                 </tr>
               </tbody>
             </table>
@@ -851,7 +863,7 @@
       selectAllCheckbox.checked = false;
 
       if (studentsData.length === 0) {
-        studentTableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No student accounts found.</td></tr>`;
+        studentTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">No student accounts found.</td></tr>`;
         return;
       }
 
@@ -877,6 +889,13 @@
         // Enrollment number
         const tdEnroll = document.createElement("td");
         tdEnroll.textContent = student.enrollment_number;
+
+        // Standard
+        const tdStandard = document.createElement("td");
+        const stdBadge = document.createElement("span");
+        stdBadge.textContent = student.standard ? `Std ${student.standard}` : "—";
+        stdBadge.style.cssText = "background:var(--primary-light); color:var(--primary-dark); padding:2px 8px; border-radius:6px; font-size:0.78rem; font-weight:600;";
+        tdStandard.appendChild(stdBadge);
 
         // Email address
         const tdEmail = document.createElement("td");
@@ -918,6 +937,7 @@
 
         tr.appendChild(tdCheck);
         tr.appendChild(tdEnroll);
+        tr.appendChild(tdStandard);
         tr.appendChild(tdEmail);
         tr.appendChild(tdStatus);
         tr.appendChild(tdActions);
@@ -1000,7 +1020,8 @@
 
       try {
         const createFn = functions.httpsCallable("create_student");
-        await createFn({ enrollment_number: enrollmentVal, password: passwordVal });
+        const standardVal = document.getElementById("newStandard").value;
+        await createFn({ enrollment_number: enrollmentVal, password: passwordVal, standard: standardVal });
         
         showFeedback(addStudentFeedback, "Student account created successfully.", "success");
         addStudentForm.reset();
@@ -1034,9 +1055,10 @@
       const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
       const enrollIdx = headers.indexOf("enrollment_number");
       const passIdx = headers.indexOf("password");
+      const stdIdx = headers.indexOf("standard");
 
-      if (enrollIdx === -1 || passIdx === -1) {
-        alert("Invalid CSV headers. Must contain 'enrollment_number' and 'password' columns.");
+      if (enrollIdx === -1 || passIdx === -1 || stdIdx === -1) {
+        alert("Invalid CSV headers. Must contain 'enrollment_number', 'password', and 'standard' columns.");
         resetCSVInput();
         return;
       }
@@ -1051,9 +1073,10 @@
         const cols = line.split(",");
         const enrollment = cols[enrollIdx] ? cols[enrollIdx].trim() : "";
         const password = cols[passIdx] ? cols[passIdx].trim() : "";
+        const standard = cols[stdIdx] ? cols[stdIdx].trim() : "";
 
         if (enrollment || password) {
-          csvDataParsed.push({ enrollment_number: enrollment, password: password });
+          csvDataParsed.push({ enrollment_number: enrollment, password: password, standard: standard });
         }
       }
 
@@ -1072,12 +1095,12 @@
       csvCount.textContent = csvDataParsed.length;
       csvDataParsed.slice(0, 5).forEach(row => {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${row.enrollment_number}</td><td>${row.password ? '••••••' : ''}</td>`;
+        tr.innerHTML = `<td>${row.enrollment_number}</td><td><span style="background:var(--primary-light);color:var(--primary-dark);padding:1px 6px;border-radius:4px;font-size:0.78rem;font-weight:600;">${row.standard || '?'}</span></td><td>${row.password ? '••••••' : ''}</td>`;
         csvPreviewBody.appendChild(tr);
       });
       if (csvDataParsed.length > 5) {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td colspan="2" style="text-align:center; color:var(--text-muted);">... and ${csvDataParsed.length - 5} more</td>`;
+        tr.innerHTML = `<td colspan="3" style="text-align:center; color:var(--text-muted);">... and ${csvDataParsed.length - 5} more</td>`;
         csvPreviewBody.appendChild(tr);
       }
 
@@ -1229,7 +1252,7 @@
         
         settingsLimit.value = res.data.daily_message_limit;
         settingsHistory.value = res.data.history_context_length;
-        settingsModel.value = res.data.gemini_model;
+        settingsModel.value = res.data.groq_model;
         settingsMaxTokens.value = res.data.max_output_tokens;
       } catch (err) {
         console.error("Failed to load app settings:", err);
@@ -1254,7 +1277,7 @@
         await updateSettingsFn({
           daily_message_limit: limit,
           history_context_length: history,
-          gemini_model: model,
+          groq_model: model,
           max_output_tokens: maxTokens
         });
         showFeedback(settingsFeedback, "Operating parameters updated successfully.", "success");
