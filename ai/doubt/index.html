@@ -308,7 +308,12 @@
       border-top: 1.5px solid var(--border-color);
       display: flex;
       gap: 12px;
-      align-items: center;
+      align-items: flex-end; /* Align to bottom for multiline text */
+    }
+
+    /* Adjust bottom bar padding when keyboard is open on mobile */
+    body.keyboard-open .chat-input-bar {
+      padding-bottom: 12px !important;
     }
 
     .chat-input-wrapper {
@@ -318,7 +323,7 @@
 
     .chat-input {
       width: 100%;
-      padding: 14px 20px;
+      padding: 12px 20px;
       font-size: 1rem;
       font-family: inherit;
       color: var(--text);
@@ -327,6 +332,12 @@
       border-radius: 12px;
       outline: none;
       transition: var(--transition);
+      resize: none;
+      min-height: 48px;
+      max-height: 120px;
+      overflow-y: auto;
+      line-height: 1.4;
+      display: block;
     }
 
     .chat-input:focus {
@@ -517,10 +528,13 @@
         padding: 12px 15px calc(28px + env(safe-area-inset-bottom)) 15px; /* Spaced safety region */
         gap: 8px;
         background-color: #ffffff;
+        align-items: flex-end;
       }
       .chat-input {
         padding: 10px 15px;
         font-size: 0.94rem;
+        min-height: 40px;
+        max-height: 90px;
       }
       .btn-send {
         padding: 10px 16px;
@@ -575,13 +589,13 @@
 
       <div class="chat-input-bar">
         <div class="chat-input-wrapper">
-          <input 
-            type="text" 
+          <textarea 
             id="chatInput" 
             class="chat-input" 
             placeholder="Type your English grammar doubt here..."
             maxlength="1000"
-          >
+            rows="1"
+          ></textarea>
         </div>
         <button id="sendBtn" class="btn-send">
           <span>Send</span>
@@ -822,12 +836,11 @@
       if (isLoading) {
         typingIndicator.style.display = "flex";
         sendBtn.disabled = true;
-        chatInput.disabled = true;
+        // Do not disable chatInput to avoid closing virtual keyboard on mobile devices
         scrollToBottom();
       } else {
         typingIndicator.style.display = "none";
         sendBtn.disabled = false;
-        chatInput.disabled = false;
         chatInput.focus();
       }
     }
@@ -840,10 +853,12 @@
 
     // Call query submit
     async function handleSend() {
+      if (sendBtn.disabled) return;
       const text = chatInput.value.trim();
       if (!text) return;
 
       chatInput.value = "";
+      chatInput.style.height = "auto"; // Reset auto-grown height
       appendMessage("user", text);
       setUIStateLoading(true);
       
@@ -890,11 +905,38 @@
     }
 
     sendBtn.addEventListener("click", handleSend);
+    
+    // Support Ctrl+Enter / Cmd+Enter to send on desktop; standard Enter creates a newline
     chatInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !sendBtn.disabled) {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !sendBtn.disabled) {
+        e.preventDefault();
         handleSend();
       }
     });
+
+    // Auto-grow textarea height on content input
+    chatInput.addEventListener("input", function() {
+      this.style.height = "auto";
+      this.style.height = this.scrollHeight + "px";
+    });
+
+    // Align input above keyboard when visual viewport scales/shifts (virtual keyboard toggle)
+    if (window.visualViewport) {
+      const handleVisualViewportChange = () => {
+        const vv = window.visualViewport;
+        document.body.style.height = `${vv.height}px`;
+        
+        // Detect if virtual keyboard is open
+        if (vv.height < window.innerHeight - 80) {
+          document.body.classList.add("keyboard-open");
+        } else {
+          document.body.classList.remove("keyboard-open");
+        }
+        scrollToBottom();
+      };
+      window.visualViewport.addEventListener("resize", handleVisualViewportChange);
+      window.visualViewport.addEventListener("scroll", handleVisualViewportChange);
+    }
   </script>
 </body>
 </html>
