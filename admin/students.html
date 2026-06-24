@@ -401,21 +401,64 @@ loadStudents();
 /* CSV IMPORT */
 window.importCSV=function(){
 const file=document.getElementById("csvFile").files[0];
-if(!file) return alert("Select CSV");
+if(!file) return alert("Select CSV file first");
 Papa.parse(file,{
 header:true,
+skipEmptyLines:'greedy',
 complete:async function(results){
-for(const row of results.data){
-if(!row["Admission No"]) continue;
-await addDoc(collection(db,"students"),{
-admissionNo:row["Admission No"],
-name:row["Name"],
-course:row["Course"],
-mobile:row["Mobile"],
-school:row["School"]
-});
+console.log("Parsed CSV Results:", results);
+
+if(results.errors && results.errors.length > 0){
+console.warn("CSV parsing warnings/errors:", results.errors);
 }
+
+if(!results.data || results.data.length === 0){
+return alert("No data found in the CSV file.");
+}
+
+let importCount = 0;
+let skipCount = 0;
+
+for(const row of results.data){
+// Normalize keys to lowercase and remove non-alphanumeric chars
+const normalizedRow = {};
+for(const key in row){
+const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]/g, "");
+normalizedRow[normalizedKey] = row[key];
+}
+
+const admissionNo = normalizedRow["admissionno"] || normalizedRow["admissionnumber"] || normalizedRow["admno"] || normalizedRow["admission"];
+const name = normalizedRow["name"] || normalizedRow["studentname"] || normalizedRow["fullname"] || normalizedRow["student"];
+const course = normalizedRow["course"] || normalizedRow["standard"] || normalizedRow["class"] || normalizedRow["std"];
+const mobile = normalizedRow["mobile"] || normalizedRow["phone"] || normalizedRow["contact"] || normalizedRow["mobileno"] || "";
+const school = normalizedRow["school"] || normalizedRow["schoolname"] || "";
+
+if(!admissionNo || !name || !course){
+skipCount++;
+continue;
+}
+
+try{
+await addDoc(collection(db,"students"),{
+admissionNo: String(admissionNo).trim(),
+name: String(name).trim(),
+course: String(course).trim(),
+mobile: String(mobile).trim(),
+school: String(school).trim()
+});
+importCount++;
+}catch(e){
+console.error("Error adding student:", row, e);
+return alert("Failed to import: " + e.message);
+}
+}
+
+alert("Import completed! Successfully imported " + importCount + " students. Skipped " + skipCount + " due to missing fields.");
 loadStudents();
+},
+error: function(err){
+console.error("CSV Parse Error:", err);
+alert("Error parsing CSV: " + err.message);
 }
 });
 }
