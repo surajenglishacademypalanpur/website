@@ -1,85 +1,178 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Admin Login</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | Suraj English Academy</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom animated mesh gradient background */
+        body {
+            background: radial-gradient(circle at 10% 20%, rgba(20, 30, 48, 1) 0%, rgba(36, 59, 85, 1) 90%);
+            overflow: hidden;
+            position: relative;
+        }
+        .glow-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.15;
+            z-index: 0;
+            animation: float 15s infinite alternate ease-in-out;
+        }
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: #4f46e5;
+            top: -100px;
+            left: -100px;
+        }
+        .orb-2 {
+            width: 500px;
+            height: 500px;
+            background: #06b6d4;
+            bottom: -150px;
+            right: -100px;
+            animation-delay: -5s;
+        }
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(60px, 40px) scale(1.1); }
+        }
+    </style>
 </head>
+<body class="flex items-center justify-center h-screen w-screen relative">
 
-<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <!-- Background decorative elements -->
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
 
-<div class="bg-white p-8 rounded-xl shadow w-80">
+    <!-- Login Container -->
+    <div class="relative z-10 w-full max-w-md p-4">
+        <!-- Glassmorphism Card -->
+        <div class="bg-white/10 backdrop-blur-xl border border-white/20 p-8 rounded-2xl shadow-2xl w-full text-white transition-all duration-300 hover:border-white/30">
+            
+            <!-- School Emblem Placeholder or Icon -->
+            <div class="flex flex-col items-center mb-8">
+                <div class="w-16 h-16 bg-gradient-to-tr from-indigo-500 to-cyan-400 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30 mb-4 transform hover:rotate-12 transition-transform duration-300">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold tracking-wide bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent text-center">
+                    Suraj English Academy
+                </h2>
+                <p class="text-xs text-cyan-300 font-medium tracking-widest uppercase mt-1">Admin Portal</p>
+            </div>
 
-<h2 class="text-xl font-bold mb-6 text-center">
-Suraj English Academy
-</h2>
+            <!-- Form -->
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Email Address</label>
+                    <div class="relative">
+                        <input id="email" type="email" placeholder="admin@surajacademy.in"
+                            class="bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 pl-11 w-full text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all duration-200">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path>
+                            </svg>
+                        </span>
+                    </div>
+                </div>
 
-<input id="email" placeholder="Email"
-class="border p-3 w-full mb-4 rounded">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Password</label>
+                    <div class="relative">
+                        <input id="password" type="password" placeholder="••••••••"
+                            class="bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 pl-11 w-full text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all duration-200">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                            </svg>
+                        </span>
+                    </div>
+                </div>
 
-<input id="password" type="password"
-placeholder="Password"
-class="border p-3 w-full mb-4 rounded">
+                <div class="pt-2">
+                    <button onclick="login()"
+                        class="bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600 text-white font-semibold w-full py-3.5 rounded-xl shadow-lg shadow-indigo-500/20 active:scale-[0.98] transition-all duration-150 flex items-center justify-center gap-2">
+                        <span>Sign In</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                        </svg>
+                    </button>
+                </div>
 
-<button onclick="login()"
-class="bg-blue-600 text-white w-full py-3 rounded">
-Login
-</button>
+                <p id="error" class="text-rose-400 text-center text-sm font-medium mt-2 min-h-[1.25rem]"></p>
+            </div>
 
-<p id="error" class="text-red-500 mt-3 text-sm"></p>
+        </div>
+    </div>
 
-</div>
+    <!-- Firebase SDK Modules -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
-<script type="module">
+        const firebaseConfig = {
+            apiKey: "AIzaSyACOURK_ZQEuxuZqP5Xfv_lZ29Nj59uHj8",
+            authDomain: "suraj-english-academy-7141e.firebaseapp.com",
+            projectId: "suraj-english-academy-7141e",
+            storageBucket: "suraj-english-academy-7141e.firebasestorage.app",
+            messagingSenderId: "291322319555",
+            appId: "1:291322319555:web:9ad5bb47e56ee27b9dc876"
+        };
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
 
-import {
-getAuth,
-signInWithEmailAndPassword
-}
-from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+        // Redirect if already logged in
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                window.location = "students.html";
+            }
+        });
 
-const firebaseConfig = {
+        window.login = async function() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const errorEl = document.getElementById("error");
+            
+            errorEl.innerText = "";
 
-apiKey: "AIzaSyACOURK_ZQEuxuZqP5Xfv_lZ29Nj59uHj8",
-authDomain: "suraj-english-academy-7141e.firebaseapp.com",
-projectId: "suraj-english-academy-7141e",
-storageBucket: "suraj-english-academy-7141e.firebasestorage.app",
-messagingSenderId: "291322319555",
-appId: "1:291322319555:web:9ad5bb47e56ee27b9dc876"
+            if (!email || !password) {
+                errorEl.innerText = "Please enter both email and password.";
+                return;
+            }
 
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
-window.login = async function(){
-
-const email=document.getElementById("email").value;
-const password=document.getElementById("password").value;
-
-try{
-
-await signInWithEmailAndPassword(auth,email,password);
-
-window.location="students.html";
-
-}catch(e){
-
-document.getElementById("error").innerText=e.message;
-
-}
-
-}
-
-</script>
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                window.location = "students.html";
+            } catch(e) {
+                // Prettify common error messages
+                if (e.code === "auth/invalid-credential" || e.code === "auth/user-not-found" || e.code === "auth/wrong-password") {
+                    errorEl.innerText = "Invalid email or password.";
+                } else {
+                    errorEl.innerText = e.message;
+                }
+            }
+        }
+    </script>
 
 </body>
 </html>
