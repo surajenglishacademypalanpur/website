@@ -15,6 +15,9 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-functions-compat.js"></script>
   
+  <!-- html2pdf.js for client-side PDF downloads -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  
   <style>
     :root {
       --primary: #4a7a5e;
@@ -323,7 +326,7 @@
 
     .chat-input {
       width: 100%;
-      padding: 12px 20px;
+      padding: 12px 50px 12px 20px; /* Space on right for mic button */
       font-size: 1rem;
       font-family: inherit;
       color: var(--text);
@@ -541,6 +544,217 @@
         font-size: 0.94rem;
       }
     }
+
+    /* Microphone Button Styling */
+    .btn-mic {
+      position: absolute;
+      right: 15px;
+      bottom: 10px;
+      background: transparent;
+      border: none;
+      font-size: 1.25rem;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: var(--transition);
+      z-index: 10;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+
+    .btn-mic:hover {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+
+    .btn-mic.listening {
+      opacity: 1;
+      color: #e53935;
+      animation: micPulse 1.5s infinite ease-in-out;
+      background-color: rgba(229, 57, 53, 0.1);
+    }
+
+    @keyframes micPulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(229, 57, 53, 0.4); }
+      70% { transform: scale(1.15); box-shadow: 0 0 0 8px rgba(229, 57, 53, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(229, 57, 53, 0); }
+    }
+
+    /* Quick Helper Chips */
+    .quick-chips-container {
+      display: flex;
+      gap: 10px;
+      padding: 10px 24px;
+      background-color: #ffffff;
+      border-top: 1.5px solid var(--border-color);
+      overflow-x: auto;
+      white-space: nowrap;
+      scrollbar-width: none;
+    }
+
+    .quick-chips-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    .chip-item {
+      display: inline-block;
+      padding: 8px 16px;
+      background-color: var(--primary-light);
+      border: 1px solid rgba(74, 122, 94, 0.15);
+      color: var(--primary-dark);
+      border-radius: 20px;
+      font-size: 0.88rem;
+      font-weight: 550;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .chip-item:hover {
+      background-color: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+      transform: translateY(-1px);
+    }
+
+    .chip-item:active {
+      transform: translateY(1px);
+    }
+
+    @media (max-width: 600px) {
+      .quick-chips-container {
+        padding: 8px 15px;
+      }
+    }
+
+    /* Slide-out Bookmarks Drawer */
+    .bookmarks-drawer {
+      position: fixed;
+      top: 0;
+      right: -380px;
+      width: 380px;
+      max-width: 100%;
+      height: 100vh;
+      background-color: #ffffff;
+      box-shadow: -4px 0 20px rgba(52, 88, 64, 0.15);
+      z-index: 2000;
+      transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .bookmarks-drawer.open {
+      right: 0;
+    }
+
+    .bookmarks-drawer-header {
+      padding: 20px 24px;
+      border-bottom: 1.5px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: var(--primary-light);
+    }
+
+    .bookmarks-drawer-header h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      color: var(--primary-dark);
+    }
+
+    .btn-close-drawer {
+      background: transparent;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .btn-close-drawer:hover {
+      color: var(--primary-dark);
+    }
+
+    .bookmarks-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      background-color: var(--bg);
+    }
+
+    .bookmark-card {
+      background-color: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 6px rgba(52, 88, 64, 0.03);
+      position: relative;
+    }
+
+    .bookmark-card-question {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      border-left: 3px solid var(--accent);
+      padding-left: 8px;
+    }
+
+    .bookmark-card-answer {
+      font-size: 0.94rem;
+      line-height: 1.45;
+      color: var(--text);
+      word-wrap: break-word;
+    }
+
+    .bookmark-card-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 10px;
+      border-top: 1px dashed rgba(74, 122, 94, 0.1);
+      padding-top: 8px;
+    }
+
+    .bookmark-action-btn {
+      background: transparent;
+      border: none;
+      font-size: 0.85rem;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: var(--transition);
+    }
+
+    .bookmark-action-btn:hover {
+      opacity: 1;
+    }
+
+    .bookmarks-drawer-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 1999;
+      display: none;
+      backdrop-filter: blur(2px);
+    }
+
+    .bookmarks-drawer-overlay.show {
+      display: block;
+    }
+
+    .empty-bookmarks-text {
+      text-align: center;
+      color: var(--text-muted);
+      margin-top: 40px;
+      font-size: 0.95rem;
+    }
   </style>
 </head>
 <body>
@@ -556,6 +770,8 @@
     
     <div class="header-actions">
       <div class="desktop-buttons">
+        <button id="starredBtn" class="btn-secondary">⭐ Bookmarks</button>
+        <button id="downloadPdfBtn" class="btn-secondary">📄 Download PDF</button>
         <button id="clearChatBtn" class="btn-secondary">Clear Chat</button>
         <button id="logoutBtn" class="btn-logout">Logout</button>
       </div>
@@ -567,6 +783,8 @@
           <span></span>
         </button>
         <div id="mobileDropdown" class="mobile-dropdown-menu">
+          <button id="starredBtnMobile" class="dropdown-item">⭐ Bookmarks</button>
+          <button id="downloadPdfBtnMobile" class="dropdown-item">📄 Download PDF</button>
           <button id="clearChatBtnMobile" class="dropdown-item">Clear Chat</button>
           <button id="logoutBtnMobile" class="dropdown-item logout">Logout</button>
         </div>
@@ -587,6 +805,15 @@
         <span></span><span></span><span></span>
       </div>
 
+      <!-- Quick Help Topic Chips -->
+      <div class="quick-chips-container" id="quickChips">
+        <span class="chip-item" data-template="Please check if there are any spelling or grammar mistakes in this sentence: &quot;&quot;">🔍 Check Spelling</span>
+        <span class="chip-item" data-template="Explain the tense used in this sentence: &quot;&quot;">✏️ Explain Tense</span>
+        <span class="chip-item" data-template="Change the voice of this sentence to active or passive: &quot;&quot;">🔄 Change Voice</span>
+        <span class="chip-item" data-template="Please explain the difference between active voice and passive voice with examples.">📖 Active vs Passive</span>
+        <span class="chip-item" data-template="Give me 3 practice grammar questions on Direct and Indirect Speech.">📝 Practice Questions</span>
+      </div>
+
       <div class="chat-input-bar">
         <div class="chat-input-wrapper">
           <textarea 
@@ -596,6 +823,7 @@
             maxlength="1000"
             rows="1"
           ></textarea>
+          <button id="micBtn" class="btn-mic" title="Voice Typing (Speech to Text)">🎤</button>
         </div>
         <button id="sendBtn" class="btn-send">
           <span>Send</span>
@@ -617,6 +845,18 @@
     const menuToggleBtn = document.getElementById("menuToggleBtn");
     const mobileDropdown = document.getElementById("mobileDropdown");
     const errorToast = document.getElementById("errorToast");
+
+    // New Free Features Element References
+    const micBtn = document.getElementById("micBtn");
+    const starredBtn = document.getElementById("starredBtn");
+    const starredBtnMobile = document.getElementById("starredBtnMobile");
+    const downloadPdfBtn = document.getElementById("downloadPdfBtn");
+    const downloadPdfBtnMobile = document.getElementById("downloadPdfBtnMobile");
+    const bookmarksDrawer = document.getElementById("bookmarksDrawer");
+    const bookmarksOverlay = document.getElementById("bookmarksOverlay");
+    const closeBookmarksBtn = document.getElementById("closeBookmarksBtn");
+    const bookmarksList = document.getElementById("bookmarksList");
+    const quickChips = document.getElementById("quickChips");
 
     let currentUser = null;
     let localHistoryKey = "";
@@ -770,9 +1010,39 @@
 
         // Feedback buttons
         const fbDiv = document.createElement("div");
-        fbDiv.style.cssText = "display:flex; gap:6px; margin-top:6px; justify-content:flex-end;";
+        fbDiv.style.cssText = "display:flex; gap:6px; margin-top:6px; justify-content:flex-end; align-items:center;";
         const capturedUser = lastUserMessage;
         const capturedBot = text;
+
+        // Speak button
+        const speakBtn = document.createElement("button");
+        speakBtn.textContent = "🔊";
+        speakBtn.title = "Listen (Text to Speech)";
+        speakBtn.style.cssText = "background:transparent; border:1px solid rgba(74,122,94,0.2); border-radius:20px; cursor:pointer; font-size:0.9rem; padding:2px 8px; transition:all 0.2s; opacity:0.6;";
+        speakBtn.addEventListener("mouseover", () => speakBtn.style.opacity = "1");
+        speakBtn.addEventListener("mouseout", () => speakBtn.style.opacity = "0.6");
+        speakBtn.addEventListener("click", () => speakText(capturedBot));
+        fbDiv.appendChild(speakBtn);
+
+        // Star/Bookmark button
+        const starBtn = document.createElement("button");
+        starBtn.textContent = "⭐";
+        starBtn.title = "Save Explanation";
+        starBtn.style.cssText = "background:transparent; border:1px solid rgba(74,122,94,0.2); border-radius:20px; cursor:pointer; font-size:0.9rem; padding:2px 8px; transition:all 0.2s; opacity:0.6;";
+        if (capturedUser && isBookmarked(capturedUser, capturedBot)) {
+          starBtn.style.opacity = "1";
+          starBtn.style.backgroundColor = "var(--primary-light)";
+          starBtn.style.borderColor = "var(--primary)";
+        }
+        starBtn.addEventListener("mouseover", () => {
+          if (!isBookmarked(capturedUser, capturedBot)) starBtn.style.opacity = "1";
+        });
+        starBtn.addEventListener("mouseout", () => {
+          if (!isBookmarked(capturedUser, capturedBot)) starBtn.style.opacity = "0.6";
+        });
+        starBtn.addEventListener("click", () => toggleBookmark(capturedUser, capturedBot, starBtn));
+        fbDiv.appendChild(starBtn);
+
         ["up", "down"].forEach(rating => {
           const btn = document.createElement("button");
           btn.textContent = rating === "up" ? "👍" : "👎";
@@ -937,6 +1207,346 @@
       window.visualViewport.addEventListener("resize", handleVisualViewportChange);
       window.visualViewport.addEventListener("scroll", handleVisualViewportChange);
     }
+
+    // ==========================================
+    // NEW FREE FEATURES JAVASCRIPT LOGIC
+    // ==========================================
+
+    // 1. Quick Chips template selector
+    quickChips.addEventListener("click", (e) => {
+      const chip = e.target.closest(".chip-item");
+      if (!chip) return;
+      const template = chip.getAttribute("data-template");
+      chatInput.value = template;
+      chatInput.focus();
+      
+      // Position cursor inside the quotation marks if present
+      const quoteIndex = template.indexOf('""');
+      if (quoteIndex !== -1) {
+        chatInput.setSelectionRange(quoteIndex + 1, quoteIndex + 1);
+      }
+      
+      // Auto-grow textarea
+      chatInput.style.height = "auto";
+      chatInput.style.height = chatInput.scrollHeight + "px";
+    });
+
+    // 2. Speech-to-Text (Voice Typing) using Web Speech API
+    let recognition = null;
+    if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = "en-IN"; // Capture English (Indian/General) speech
+
+      recognition.onstart = () => {
+        micBtn.classList.add("listening");
+        micBtn.textContent = "🛑";
+      };
+
+      recognition.onend = () => {
+        micBtn.classList.remove("listening");
+        micBtn.textContent = "🎤";
+      };
+
+      recognition.onerror = (e) => {
+        console.error("Speech recognition error:", e);
+        micBtn.classList.remove("listening");
+        micBtn.textContent = "🎤";
+        showToast("Voice typing access was denied or timed out.");
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        if (transcript) {
+          const start = chatInput.selectionStart;
+          const end = chatInput.selectionEnd;
+          const originalText = chatInput.value;
+          
+          // Insert transcript at the cursor position
+          chatInput.value = originalText.substring(0, start) + transcript + originalText.substring(end);
+          chatInput.focus();
+          
+          // Adjust height of textarea
+          chatInput.style.height = "auto";
+          chatInput.style.height = chatInput.scrollHeight + "px";
+        }
+      };
+
+      micBtn.addEventListener("click", () => {
+        if (micBtn.classList.contains("listening")) {
+          recognition.stop();
+        } else {
+          try {
+            recognition.start();
+          } catch(err) {
+            console.error("Failed to start speech recognition:", err);
+          }
+        }
+      });
+    } else {
+      // Hide mic button if browser doesn't support Web Speech API
+      micBtn.style.display = "none";
+    }
+
+    // 3. Text-to-Speech (Pronunciation Reader) using SpeechSynthesis API
+    function stripHtml(html) {
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      return doc.body.textContent || "";
+    }
+
+    function speakText(text) {
+      if (!window.speechSynthesis) {
+        showToast("Text-to-Speech is not supported in this browser.");
+        return;
+      }
+
+      // If already speaking, toggle/cancel voice
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        return;
+      }
+
+      const cleanText = stripHtml(text);
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.lang = "en-US";
+
+      // Attempt to load standard English voice
+      const voices = window.speechSynthesis.getVoices();
+      const engVoice = voices.find(v => v.lang.startsWith("en-US") || v.lang.startsWith("en-GB"));
+      if (engVoice) {
+        utterance.voice = engVoice;
+      }
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // 4. Starred Explanations (Bookmarks) CRUD
+    function getStarredKey() {
+      return currentUser ? `suraj_starred_doubts_${currentUser.uid}` : "suraj_starred_doubts_guest";
+    }
+
+    function getStarredList() {
+      const stored = localStorage.getItem(getStarredKey());
+      try {
+        return stored ? JSON.parse(stored) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveStarredList(list) {
+      localStorage.setItem(getStarredKey(), JSON.stringify(list));
+      renderBookmarksList();
+    }
+
+    function isBookmarked(question, answer) {
+      const list = getStarredList();
+      return list.some(item => item.question === question && item.answer === answer);
+    }
+
+    function toggleBookmark(question, answer, starBtn) {
+      if (!currentUser) {
+        showToast("Please log in to save bookmarks.");
+        return;
+      }
+
+      let list = getStarredList();
+      if (isBookmarked(question, answer)) {
+        // Unstar item
+        list = list.filter(item => !(item.question === question && item.answer === answer));
+        saveStarredList(list);
+        starBtn.style.opacity = "0.6";
+        starBtn.style.backgroundColor = "transparent";
+        starBtn.style.borderColor = "rgba(74, 122, 94, 0.2)";
+        showToast("Removed from bookmarks.");
+      } else {
+        // Star item
+        list.push({ id: Date.now(), question, answer });
+        saveStarredList(list);
+        starBtn.style.opacity = "1";
+        starBtn.style.backgroundColor = "var(--primary-light)";
+        starBtn.style.borderColor = "var(--primary)";
+        showToast("Saved to bookmarks!");
+      }
+    }
+
+    function renderBookmarksList() {
+      bookmarksList.innerHTML = "";
+      const list = getStarredList();
+
+      if (list.length === 0) {
+        bookmarksList.innerHTML = `<div class="empty-bookmarks-text">No saved doubts yet. Tap the ⭐ icon next to any answer to bookmark it!</div>`;
+        return;
+      }
+
+      list.forEach(item => {
+        const card = document.createElement("div");
+        card.classList.add("bookmark-card");
+
+        const qEl = document.createElement("div");
+        qEl.classList.add("bookmark-card-question");
+        qEl.textContent = `Q: ${item.question}`;
+        card.appendChild(qEl);
+
+        const aEl = document.createElement("div");
+        aEl.classList.add("bookmark-card-answer");
+        aEl.innerHTML = formatMarkdown(item.answer);
+        card.appendChild(aEl);
+
+        const actions = document.createElement("div");
+        actions.classList.add("bookmark-card-actions");
+
+        // Listen Button
+        const listenBtn = document.createElement("button");
+        listenBtn.classList.add("bookmark-action-btn");
+        listenBtn.textContent = "🔊 Listen";
+        listenBtn.addEventListener("click", () => speakText(item.answer));
+        actions.appendChild(listenBtn);
+
+        // Copy Button
+        const copyBtn = document.createElement("button");
+        copyBtn.classList.add("bookmark-action-btn");
+        copyBtn.textContent = "📋 Copy";
+        copyBtn.addEventListener("click", () => {
+          navigator.clipboard.writeText(`Doubt: ${item.question}\nExplanation: ${stripHtml(item.answer)}`).then(() => {
+            showToast("Copied to clipboard!");
+          });
+        });
+        actions.appendChild(copyBtn);
+
+        // Delete Button
+        const delBtn = document.createElement("button");
+        delBtn.classList.add("bookmark-action-btn");
+        delBtn.style.color = "#d32f2f";
+        delBtn.textContent = "🗑️ Delete";
+        delBtn.addEventListener("click", () => {
+          let updated = getStarredList();
+          updated = updated.filter(b => b.id !== item.id);
+          saveStarredList(updated);
+          // Sync star button UI in active chat
+          loadLocalHistory();
+          showToast("Deleted bookmark.");
+        });
+        actions.appendChild(delBtn);
+
+        card.appendChild(actions);
+        bookmarksList.appendChild(card);
+      });
+    }
+
+    // 5. Bookmarks Drawer sliding event toggles
+    function openDrawer() {
+      mobileDropdown.classList.remove("show");
+      menuToggleBtn.classList.remove("active");
+      renderBookmarksList();
+      bookmarksDrawer.classList.add("open");
+      bookmarksOverlay.classList.add("show");
+    }
+
+    function closeDrawer() {
+      bookmarksDrawer.classList.remove("open");
+      bookmarksOverlay.classList.remove("show");
+    }
+
+    starredBtn.addEventListener("click", openDrawer);
+    starredBtnMobile.addEventListener("click", openDrawer);
+    closeBookmarksBtn.addEventListener("click", closeDrawer);
+    bookmarksOverlay.addEventListener("click", closeDrawer);
+
+    // 6. Download Chat as revision PDF
+    function downloadChatAsPdf() {
+      mobileDropdown.classList.remove("show");
+      menuToggleBtn.classList.remove("active");
+
+      const messageElements = messagesStream.querySelectorAll(".message");
+      if (messageElements.length === 0) {
+        showToast("No chat history to download.");
+        return;
+      }
+
+      // Hide interactive button bar from PDF output
+      const feedbackButtons = messagesStream.querySelectorAll("div[style*='display:flex']");
+      feedbackButtons.forEach(el => el.setAttribute("data-html2pdf-ignore", "true"));
+
+      // Clone messages stream context and layout for print formatting
+      const printContainer = document.createElement("div");
+      printContainer.style.padding = "30px";
+      printContainer.style.backgroundColor = "#ffffff";
+      printContainer.style.fontFamily = "'Outfit', sans-serif";
+
+      const printHeader = document.createElement("div");
+      printHeader.style.cssText = "border-bottom: 2px solid #345840; padding-bottom: 15px; margin-bottom: 25px; text-align: center;";
+      printHeader.innerHTML = `
+        <h1 style="color: #345840; font-family: 'Playfair Display', serif; font-size: 24px; margin: 0 0 5px 0;">Suraj English Academy</h1>
+        <p style="color: #6e8477; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin: 0;">AI Grammar Doubt Solver — Study Revision Notes</p>
+        <p style="color: #2c3e35; font-size: 11px; margin: 6px 0 0 0;">Date: ${new Date().toLocaleDateString()} | Student ID: ${currentUser ? currentUser.email.split('@')[0] : 'Guest'}</p>
+      `;
+      printContainer.appendChild(printHeader);
+
+      const clonedStream = messagesStream.cloneNode(true);
+      clonedStream.style.backgroundImage = "none";
+      clonedStream.style.backgroundColor = "#ffffff";
+      clonedStream.style.padding = "0";
+
+      const clonedMessages = clonedStream.querySelectorAll(".message");
+      clonedMessages.forEach(msg => {
+        msg.style.maxWidth = "100%";
+        msg.style.marginBottom = "15px";
+        msg.style.padding = "14px 18px";
+        msg.style.borderRadius = "12px";
+        msg.style.fontSize = "13px";
+        msg.style.boxShadow = "none";
+        msg.style.animation = "none";
+        msg.style.transform = "none";
+        msg.style.opacity = "1";
+
+        if (msg.classList.contains("user")) {
+          msg.style.backgroundColor = "#f0f4f1";
+          msg.style.color = "#2c3e35";
+          msg.style.borderLeft = "4px solid #345840";
+        } else {
+          msg.style.backgroundColor = "#faf6ee";
+          msg.style.color = "#2c3e35";
+          msg.style.borderLeft = "4px solid #e8a33d";
+        }
+      });
+
+      printContainer.appendChild(clonedStream);
+
+      const opt = {
+        margin:       12,
+        filename:     `Suraj_Academy_Notes_${Date.now()}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      showToast("Compiling revision PDF notes sheet...");
+      html2pdf().from(printContainer).set(opt).save().then(() => {
+        showToast("PDF downloaded successfully!");
+      }).catch(err => {
+        console.error("PDF generation error:", err);
+        showToast("Failed to compile PDF.");
+      });
+    }
+
+    downloadPdfBtn.addEventListener("click", downloadChatAsPdf);
+    downloadPdfBtnMobile.addEventListener("click", downloadChatAsPdf);
   </script>
+  <!-- Bookmarks Drawer Overlay -->
+  <div id="bookmarksOverlay" class="bookmarks-drawer-overlay"></div>
+
+  <!-- Bookmarks Drawer -->
+  <div id="bookmarksDrawer" class="bookmarks-drawer">
+    <div class="bookmarks-drawer-header">
+      <h3>⭐ Saved Explanations</h3>
+      <button id="closeBookmarksBtn" class="btn-close-drawer">&times;</button>
+    </div>
+    <div id="bookmarksList" class="bookmarks-list">
+      <!-- Starred bookmark cards will be injected dynamically -->
+    </div>
+  </div>
 </body>
 </html>
