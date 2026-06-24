@@ -486,6 +486,12 @@
         font-size: 0.85rem;
       }
     }
+    .stat-card { background:var(--primary-light); border:1px solid var(--border-color); border-radius:var(--radius); padding:12px; text-align:center; }
+    .stat-value { font-size:1.5rem; font-weight:700; color:var(--primary-dark); font-family:'Playfair Display',serif; }
+    .stat-label { font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; font-weight:600; margin-top:2px; }
+    .std-filter-btn { background:transparent; border:1px solid var(--border-color); border-radius:6px; color:var(--text-muted); cursor:pointer; font-family:'Outfit',sans-serif; transition:var(--transition); }
+    .std-filter-btn.active, .std-filter-btn:hover { background:var(--primary); color:#fff; border-color:var(--primary); }
+    .groq-key-row { display:flex; align-items:center; gap:6px; margin-bottom:6px; font-size:0.85rem; }
   </style>
 </head>
 <body>
@@ -526,6 +532,7 @@
     <!-- Admin Mobile Navigation Tabs -->
     <div class="admin-tabs" id="adminTabs">
       <button class="tab-btn active" data-tab="directory">Directory</button>
+      <button class="tab-btn" data-tab="usage">Usage</button>
       <button class="tab-btn" data-tab="settings">Settings</button>
       <button class="tab-btn" data-tab="import">Import / Add</button>
     </div>
@@ -569,9 +576,27 @@
           <div id="settingsFeedback" class="alert"></div>
           
           <div class="settings-group">
-            <label for="settingsLimit">Daily messages limit</label>
+            <label for="settingsLimit">Global default daily limit</label>
             <input type="number" id="settingsLimit" class="form-control" min="1" max="200" required>
-            <span class="helper-text">Max doubts allowed per student per day.</span>
+            <span class="helper-text">Fallback limit if per-standard limit is not set.</span>
+          </div>
+
+          <div class="settings-group">
+            <label style="margin-bottom:6px; display:block;">Per-Standard Daily Limits</label>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+              <div>
+                <label for="settingsStd08Limit" style="font-size:0.78rem; color:var(--text-muted);">Std 08</label>
+                <input type="number" id="settingsStd08Limit" class="form-control" min="1" max="200" required>
+              </div>
+              <div>
+                <label for="settingsStd09Limit" style="font-size:0.78rem; color:var(--text-muted);">Std 09</label>
+                <input type="number" id="settingsStd09Limit" class="form-control" min="1" max="200" required>
+              </div>
+              <div>
+                <label for="settingsStd10Limit" style="font-size:0.78rem; color:var(--text-muted);">Std 10</label>
+                <input type="number" id="settingsStd10Limit" class="form-control" min="1" max="200" required>
+              </div>
+            </div>
           </div>
           
           <div class="settings-group">
@@ -593,6 +618,16 @@
           </div>
 
           <button id="saveSettingsBtn" class="btn btn-primary" style="width:100%; margin-top:10px;">Save Settings</button>
+
+          <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border-color);">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-weight:600; font-size:0.9rem;">Groq API Key Health</span>
+              <button id="checkGroqBtn" class="btn btn-secondary" style="padding:6px 12px; font-size:0.8rem;">Check Keys</button>
+            </div>
+            <div id="groqHealthResults" style="margin-top:10px; display:none;">
+              <div id="groqHealthBody"></div>
+            </div>
+          </div>
         </div>
 
         <!-- Add student form -->
@@ -683,8 +718,25 @@
           <div id="directoryFeedback" class="alert"></div>
 
           <!-- Multi selection toolbar -->
+          <div style="display:flex; gap:8px; margin-bottom:10px; align-items:center; flex-wrap:wrap;">
+            <input type="text" id="studentSearch" class="form-control" placeholder="Search by enrollment..." style="flex:1; min-width:140px; padding:7px 10px; font-size:0.85rem;">
+            <div style="display:flex; gap:4px;">
+              <button class="std-filter-btn active" data-std="all" style="padding:5px 10px; font-size:0.78rem;">All</button>
+              <button class="std-filter-btn" data-std="08" style="padding:5px 10px; font-size:0.78rem;">Std 08</button>
+              <button class="std-filter-btn" data-std="09" style="padding:5px 10px; font-size:0.78rem;">Std 09</button>
+              <button class="std-filter-btn" data-std="10" style="padding:5px 10px; font-size:0.78rem;">Std 10</button>
+            </div>
+          </div>
+
           <div class="toolbar" id="toolbar">
             <span class="toolbar-info" id="selectedCountText">0 selected</span>
+            <select id="promoteStandardSelect" style="padding:5px 8px; border-radius:6px; border:1px solid var(--border-color); font-family:inherit; font-size:0.8rem; background:#fff;">
+              <option value="">Move to standard…</option>
+              <option value="08">Std 08</option>
+              <option value="09">Std 09</option>
+              <option value="10">Std 10</option>
+            </select>
+            <button id="bulkPromoteBtn" class="btn btn-secondary" style="padding:6px 10px; font-size:0.85rem;">Apply</button>
             <button id="bulkDeleteBtn" class="btn btn-danger" style="padding:6px 14px; font-size:0.85rem;">Delete Selected</button>
           </div>
 
@@ -711,7 +763,46 @@
 
       </div>
 
+        <!-- ====== USAGE DASHBOARD TAB ====== -->
+        <div class="card tab-content-card" data-tab-group="usage" style="margin-bottom:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+            <h3>Usage Dashboard</h3>
+            <button id="refreshUsageBtn" class="btn btn-secondary" style="padding:6px 12px; font-size:0.8rem;">↻ Refresh</button>
+          </div>
+          <div id="usageDate" style="font-size:0.83rem; color:var(--text-muted); margin-bottom:12px;"></div>
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px;">
+            <div class="stat-card"><div class="stat-value" id="statTotal">—</div><div class="stat-label">Total Today</div></div>
+            <div class="stat-card"><div class="stat-value" id="statStd08">—</div><div class="stat-label">Std 08</div></div>
+            <div class="stat-card"><div class="stat-value" id="statStd09">—</div><div class="stat-label">Std 09</div></div>
+            <div class="stat-card"><div class="stat-value" id="statStd10">—</div><div class="stat-label">Std 10</div></div>
+          </div>
+          <div class="table-container">
+            <table style="font-size:0.82rem;">
+              <thead><tr><th>Enrollment</th><th>Std</th><th>Messages Today</th></tr></thead>
+              <tbody id="usageTableBody">
+                <tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Click ↻ Refresh to load usage data.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card tab-content-card" data-tab-group="usage">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+            <h3>Student Feedback</h3>
+            <button id="refreshFeedbackBtn" class="btn btn-secondary" style="padding:6px 12px; font-size:0.8rem;">↻ Refresh</button>
+          </div>
+          <div class="table-container">
+            <table style="font-size:0.82rem;">
+              <thead><tr><th>Student</th><th>Std</th><th>Rating</th><th>Question</th></tr></thead>
+              <tbody id="feedbackTableBody">
+                <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Click ↻ Refresh to load feedback.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
     </div>
+
   </div>
 
   <script src="firebase-config.js"></script>
@@ -737,8 +828,14 @@
     const settingsHistory = document.getElementById("settingsHistory");
     const settingsModel = document.getElementById("settingsModel");
     const settingsMaxTokens = document.getElementById("settingsMaxTokens");
+    const settingsStd08Limit = document.getElementById("settingsStd08Limit");
+    const settingsStd09Limit = document.getElementById("settingsStd09Limit");
+    const settingsStd10Limit = document.getElementById("settingsStd10Limit");
     const saveSettingsBtn = document.getElementById("saveSettingsBtn");
     const settingsFeedback = document.getElementById("settingsFeedback");
+    const checkGroqBtn = document.getElementById("checkGroqBtn");
+    const groqHealthResults = document.getElementById("groqHealthResults");
+    const groqHealthBody = document.getElementById("groqHealthBody");
 
     // Create student form elements
     const addStudentForm = document.getElementById("addStudentForm");
@@ -760,6 +857,11 @@
     const selectedCountText = document.getElementById("selectedCountText");
     const selectAllCheckbox = document.getElementById("selectAllCheckbox");
     const bulkDeleteBtn = document.getElementById("bulkDeleteBtn");
+    const bulkPromoteBtn = document.getElementById("bulkPromoteBtn");
+    const promoteStandardSelect = document.getElementById("promoteStandardSelect");
+    const studentSearch = document.getElementById("studentSearch");
+    const usageTableBody = document.getElementById("usageTableBody");
+    const feedbackTableBody = document.getElementById("feedbackTableBody");
 
     // Results display
     const bulkResultsBox = document.getElementById("bulkResultsBox");
@@ -856,6 +958,8 @@
       }
     }
 
+    let activeStdFilter = "all";
+
     function renderStudentsTable() {
       studentTableBody.innerHTML = "";
       selectedUids.clear();
@@ -869,6 +973,9 @@
 
       studentsData.forEach(student => {
         const tr = document.createElement("tr");
+        tr.dataset.uid = student.uid;
+        tr.dataset.enrollment = student.enrollment_number || "";
+        tr.dataset.standard = student.standard || "";
 
         // Select checkbox
         const tdCheck = document.createElement("td");
@@ -916,7 +1023,13 @@
 
         // Individual control actions
         const tdActions = document.createElement("td");
-        
+
+        const resetPwdBtn = document.createElement("button");
+        resetPwdBtn.classList.add("btn");
+        resetPwdBtn.style.cssText = "background:var(--accent); color:#fff; padding:4px 8px; font-size:0.8rem; margin-right:4px;";
+        resetPwdBtn.textContent = "Reset Pwd";
+        resetPwdBtn.addEventListener("click", () => handleResetPassword(student.uid, student.enrollment_number));
+
         const blockBtn = document.createElement("button");
         blockBtn.classList.add("btn", "btn-secondary");
         blockBtn.style.padding = "4px 8px";
@@ -932,6 +1045,7 @@
         delBtn.textContent = "Delete";
         delBtn.addEventListener("click", () => handleDeleteStudent(student.uid, student.enrollment_number));
 
+        tdActions.appendChild(resetPwdBtn);
         tdActions.appendChild(blockBtn);
         tdActions.appendChild(delBtn);
 
@@ -943,6 +1057,20 @@
         tr.appendChild(tdActions);
 
         studentTableBody.appendChild(tr);
+      });
+
+      filterStudents();
+    }
+
+    function filterStudents() {
+      const searchVal = studentSearch ? studentSearch.value.trim().toLowerCase() : "";
+      const rows = studentTableBody.querySelectorAll("tr[data-uid]");
+      rows.forEach(row => {
+        const enroll = (row.dataset.enrollment || "").toLowerCase();
+        const std = row.dataset.standard || "";
+        const matchSearch = !searchVal || enroll.includes(searchVal);
+        const matchStd = activeStdFilter === "all" || std === activeStdFilter;
+        row.style.display = (matchSearch && matchStd) ? "" : "none";
       });
     }
 
@@ -1249,25 +1377,30 @@
       try {
         const settingsFn = functions.httpsCallable("get_app_settings");
         const res = await settingsFn();
-        
         settingsLimit.value = res.data.daily_message_limit;
         settingsHistory.value = res.data.history_context_length;
         settingsModel.value = res.data.groq_model;
         settingsMaxTokens.value = res.data.max_output_tokens;
+        settingsStd08Limit.value = res.data.std08_daily_limit || res.data.daily_message_limit;
+        settingsStd09Limit.value = res.data.std09_daily_limit || res.data.daily_message_limit;
+        settingsStd10Limit.value = res.data.std10_daily_limit || res.data.daily_message_limit;
       } catch (err) {
         console.error("Failed to load app settings:", err);
       }
     }
+    }
 
     saveSettingsBtn.addEventListener("click", async () => {
       hideFeedback(settingsFeedback);
-      
       const limit = parseInt(settingsLimit.value);
       const history = parseInt(settingsHistory.value);
       const model = settingsModel.value.trim();
       const maxTokens = parseInt(settingsMaxTokens.value);
+      const std08Limit = parseInt(settingsStd08Limit.value);
+      const std09Limit = parseInt(settingsStd09Limit.value);
+      const std10Limit = parseInt(settingsStd10Limit.value);
 
-      if (isNaN(limit) || isNaN(history) || !model || isNaN(maxTokens)) {
+      if (isNaN(limit) || isNaN(history) || !model || isNaN(maxTokens) || isNaN(std08Limit) || isNaN(std09Limit) || isNaN(std10Limit)) {
         showFeedback(settingsFeedback, "Please fill in all setting fields with valid values.", "danger");
         return;
       }
@@ -1278,7 +1411,10 @@
           daily_message_limit: limit,
           history_context_length: history,
           groq_model: model,
-          max_output_tokens: maxTokens
+          max_output_tokens: maxTokens,
+          std08_daily_limit: std08Limit,
+          std09_daily_limit: std09Limit,
+          std10_daily_limit: std10Limit
         });
         showFeedback(settingsFeedback, "Operating parameters updated successfully.", "success");
         fetchAppSettings();
@@ -1333,6 +1469,133 @@
 
     // Initialize active directory tab
     switchTab("directory");
+
+    // ---- Search + Standard Filter ----
+    if (studentSearch) {
+      studentSearch.addEventListener("input", filterStudents);
+    }
+    document.querySelectorAll(".std-filter-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".std-filter-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        activeStdFilter = btn.dataset.std;
+        filterStudents();
+      });
+    });
+
+    // ---- Bulk Promote Standard ----
+    bulkPromoteBtn.addEventListener("click", async () => {
+      const newStandard = promoteStandardSelect.value;
+      if (!newStandard) { alert("Please select a standard to move students to."); return; }
+      const count = selectedUids.size;
+      if (count === 0) return;
+      if (!confirm(`Move ${count} selected student(s) to Standard ${newStandard}?`)) return;
+      try {
+        const fn = functions.httpsCallable("bulk_update_standard");
+        const res = await fn({ uids: Array.from(selectedUids), new_standard: newStandard });
+        showFeedback(directoryFeedback, `Promoted ${res.data.succeeded} student(s) to Std ${newStandard}. Failed: ${res.data.failed}.`, "success");
+        displayBatchResults(res.data);
+        fetchStudents();
+      } catch (err) {
+        showFeedback(directoryFeedback, "Bulk promote failed: " + err.message, "danger");
+      }
+    });
+
+    // ---- Reset Password ----
+    async function handleResetPassword(uid, enrollment) {
+      const newPwd = prompt(`New password for ${enrollment} (min 6 characters):`);
+      if (newPwd === null) return;
+      if (newPwd.length < 6) { alert("Password must be at least 6 characters."); return; }
+      try {
+        const fn = functions.httpsCallable("reset_student_password");
+        await fn({ uid, new_password: newPwd });
+        showFeedback(directoryFeedback, `Password reset successfully for ${enrollment}.`, "success");
+      } catch (err) {
+        showFeedback(directoryFeedback, "Failed to reset password: " + err.message, "danger");
+      }
+    }
+
+    // ---- Groq Health Check ----
+    checkGroqBtn.addEventListener("click", async () => {
+      checkGroqBtn.disabled = true;
+      checkGroqBtn.textContent = "Checking...";
+      groqHealthResults.style.display = "block";
+      groqHealthBody.innerHTML = "Testing all 3 keys...";
+      try {
+        const fn = functions.httpsCallable("check_groq_keys");
+        const res = await fn();
+        const r = res.data.results;
+        groqHealthBody.innerHTML = ["08","09","10"].map(std => {
+          const item = r[`std${std}`] || { status:"error", message:"No result" };
+          const icon = item.status === "ok" ? "✅" : "❌";
+          const color = item.status === "ok" ? "var(--primary)" : "var(--badge-blocked-text)";
+          return `<div class="groq-key-row">${icon} <strong>Std ${std}</strong>: <span style="color:${color};">${item.message}</span></div>`;
+        }).join("");
+      } catch (err) {
+        groqHealthBody.innerHTML = `<span style="color:var(--badge-blocked-text);">Error: ${err.message}</span>`;
+      } finally {
+        checkGroqBtn.disabled = false;
+        checkGroqBtn.textContent = "Check Keys";
+      }
+    });
+
+    // ---- Usage Analytics ----
+    async function fetchUsageAnalytics() {
+      usageTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center;">Loading...</td></tr>`;
+      document.getElementById("statTotal").textContent = "…";
+      document.getElementById("statStd08").textContent = "…";
+      document.getElementById("statStd09").textContent = "…";
+      document.getElementById("statStd10").textContent = "…";
+      try {
+        const fn = functions.httpsCallable("get_usage_analytics");
+        const res = await fn();
+        const data = res.data;
+        document.getElementById("usageDate").textContent = `Date: ${data.date}`;
+        document.getElementById("statTotal").textContent = data.total_messages;
+        document.getElementById("statStd08").textContent = data.by_standard["08"] || 0;
+        document.getElementById("statStd09").textContent = data.by_standard["09"] || 0;
+        document.getElementById("statStd10").textContent = data.by_standard["10"] || 0;
+        usageTableBody.innerHTML = "";
+        if (!data.students || data.students.length === 0) {
+          usageTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">No messages sent today.</td></tr>`;
+          return;
+        }
+        data.students.forEach(s => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${s.enrollment_number}</td><td><span style="background:var(--primary-light);color:var(--primary-dark);padding:1px 6px;border-radius:4px;font-size:0.78rem;font-weight:600;">Std ${s.standard}</span></td><td>${s.messages_today}</td>`;
+          usageTableBody.appendChild(tr);
+        });
+      } catch (err) {
+        usageTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--badge-blocked-text);">Error: ${err.message}</td></tr>`;
+      }
+    }
+
+    document.getElementById("refreshUsageBtn").addEventListener("click", fetchUsageAnalytics);
+
+    // ---- Student Feedback ----
+    async function fetchFeedback() {
+      feedbackTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Loading...</td></tr>`;
+      try {
+        const fn = functions.httpsCallable("get_feedback");
+        const res = await fn({ limit: 50 });
+        feedbackTableBody.innerHTML = "";
+        if (!res.data.feedback || res.data.feedback.length === 0) {
+          feedbackTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No feedback submitted yet.</td></tr>`;
+          return;
+        }
+        res.data.feedback.forEach(fb => {
+          const tr = document.createElement("tr");
+          const icon = fb.rating === "up" ? "👍" : "👎";
+          tr.innerHTML = `<td>${fb.enrollment_number || "—"}</td><td>Std ${fb.standard || "?"}</td><td style="font-size:1.1rem;">${icon}</td><td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${fb.user_question || ""}">${fb.user_question || "—"}</td>`;
+          feedbackTableBody.appendChild(tr);
+        });
+      } catch (err) {
+        feedbackTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--badge-blocked-text);">Error: ${err.message}</td></tr>`;
+      }
+    }
+
+    document.getElementById("refreshFeedbackBtn").addEventListener("click", fetchFeedback);
+
   </script>
 </body>
 </html>
