@@ -704,7 +704,7 @@
     }
 
     function showWelcomeMessage() {
-      const welcome = "Hello! 👋 I am Suraj, your automated English Grammar Assistant built by Devansh Joshi for Suraj ENglish Academy, Palanpur. What grammar doubt can I help you solve today?";
+      const welcome = "Hello! 👋 I am Suraj, your automated English Grammar Assistant built by Devansh Joshi for Suraj English Academy, Palanpur. What grammar doubt can I help you solve today?";
       appendMessage("model", welcome, true);
     }
 
@@ -741,21 +741,51 @@
     clearChatBtnMobile.addEventListener("click", handleClearChat);
 
     // Element rendering helpers
+    let lastUserMessage = "";
+
     function appendMessage(role, text, save = true) {
       const msgDiv = document.createElement("div");
       msgDiv.classList.add("message");
       if (role === "user") {
         msgDiv.classList.add("user");
         msgDiv.textContent = text;
+        lastUserMessage = text;
       } else if (role === "model") {
         msgDiv.classList.add("bot");
         msgDiv.innerHTML = formatMarkdown(text);
+
+        // Feedback buttons
+        const fbDiv = document.createElement("div");
+        fbDiv.style.cssText = "display:flex; gap:6px; margin-top:6px; justify-content:flex-end;";
+        const capturedUser = lastUserMessage;
+        const capturedBot = text;
+        ["up", "down"].forEach(rating => {
+          const btn = document.createElement("button");
+          btn.textContent = rating === "up" ? "👍" : "👎";
+          btn.title = rating === "up" ? "Helpful" : "Not helpful";
+          btn.style.cssText = "background:transparent; border:1px solid rgba(74,122,94,0.2); border-radius:20px; cursor:pointer; font-size:0.9rem; padding:2px 8px; transition:all 0.2s; opacity:0.6;";
+          btn.addEventListener("mouseover", () => btn.style.opacity = "1");
+          btn.addEventListener("mouseout", () => btn.style.opacity = "0.6");
+          btn.addEventListener("click", () => submitFeedback(rating, capturedBot, capturedUser, fbDiv));
+          fbDiv.appendChild(btn);
+        });
+        msgDiv.appendChild(fbDiv);
       }
       messagesStream.appendChild(msgDiv);
       scrollToBottom();
 
       if (save) {
         saveLocalHistory(role, text);
+      }
+    }
+
+    async function submitFeedback(rating, botMessage, userQuestion, fbDiv) {
+      fbDiv.innerHTML = `<span style="font-size:0.78rem; color:var(--text-muted); opacity:0.8;">Thanks for your feedback!</span>`;
+      try {
+        const fn = functions.httpsCallable("submit_feedback");
+        await fn({ rating, bot_message: botMessage, user_question: userQuestion });
+      } catch(e) {
+        // Fail silently — feedback errors shouldn't bother the student
       }
     }
 
