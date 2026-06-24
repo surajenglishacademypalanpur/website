@@ -2,21 +2,90 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Student Profile | Suraj English Academy</title><script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100">
+<body style="display: none;" class="bg-slate-50 min-h-screen text-slate-800">
 <!-- LOAD NAVBAR -->
 <div id="navbar"></div>
-<div class="max-w-4xl mx-auto p-4 md:p-8">
-<h1 class="text-2xl font-bold mb-6">
-Student Profile
-</h1>
-<!-- SELECT STANDARD + STUDENT -->
- <div class="bg-white p-6 rounded-xl shadow mb-6">
-<div class="grid md:grid-cols-2 gap-4"><select id="stdSelect" class="border p-3 rounded"><option value="">Select Standard</option><option value="Std. 8 (English Medium)">Std. 8 (English Medium)</option>
-<option value="Std. 8 (Gujarati Medium)">Std. 8 (Gujarati Medium)</option>
-<option value="Std. 9 (Gujarati Medium)">Std. 9 (Gujarati Medium)</option>
-<option value="Std. 10 (Gujarati Medium)">Std. 10 (Gujarati Medium)</option></select><select id="studentSelect" class="border p-3 rounded"><option value="">Select Student</option></select></div></div><!-- STUDENT PROFILE --><div id="profileBox" class="hidden bg-white p-6 rounded-xl shadow"><h2 class="text-xl font-bold mb-4">Student Details</h2><div class="grid md:grid-cols-2 gap-4 text-lg"><p><strong>Name:</strong> <span id="pName"></span></p><p><strong>Admission No:</strong> <span id="pAdmission"></span></p><p><strong>Mobile:</strong> <span id="pMobile"></span></p><p><strong>Standard:</strong> <span id="pCourse"></span></p></div></div><!-- FEES SUMMARY --><div id="feesBox" class="hidden bg-white p-6 rounded-xl shadow mt-6"><h2 class="text-xl font-bold mb-4">Fees Summary</h2><p>Total Fees: ₹ <span id="totalFee">10000</span></p><p>Paid Fees: ₹ <span id="paidFee">0</span></p><p>Due Fees: ₹ <span id="dueFee">0</span></p></div><!-- RESULT HISTORY --><div id="resultBox" class="hidden bg-white p-6 rounded-xl shadow mt-6"><h2 class="text-xl font-bold mb-4">Result History</h2><div class="overflow-x-auto"><table class="w-full border"><thead class="bg-gray-200"><tr><th class="p-3 border">Exam</th>
-<th class="p-3 border">Date</th>
-<th class="p-3 border">Marks</th></tr></thead><tbody id="resultTable"></tbody></table></div></div></div><script type="module">
+
+<div class="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    <h1 class="text-xl font-bold mb-6 text-slate-850">Student Profile Lookup</h1>
+    
+    <!-- SELECT STANDARD + STUDENT -->
+    <div class="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <select id="stdSelect" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
+                <option value="">Select Standard</option>
+                <option value="Std. 8 (English Medium)">Std. 8 (English Medium)</option>
+                <option value="Std. 8 (Gujarati Medium)">Std. 8 (Gujarati Medium)</option>
+                <option value="Std. 9 (Gujarati Medium)">Std. 9 (Gujarati Medium)</option>
+                <option value="Std. 10 (Gujarati Medium)">Std. 10 (Gujarati Medium)</option>
+            </select>
+            <select id="studentSelect" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
+                <option value="">Select Student</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- STUDENT PROFILE -->
+    <div id="profileBox" class="hidden bg-white border border-slate-100 p-6 rounded-2xl shadow-sm">
+        <h2 class="text-md font-bold text-slate-850 uppercase tracking-wider mb-4">Student Details</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm font-medium">
+            <div class="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+                <span class="text-xs text-slate-400 uppercase tracking-wider block mb-1">Student Name</span>
+                <span id="pName" class="text-base font-bold text-slate-850"></span>
+            </div>
+            <div class="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+                <span class="text-xs text-slate-400 uppercase tracking-wider block mb-1">Admission No</span>
+                <span id="pAdmission" class="text-base font-bold text-slate-850 font-mono"></span>
+            </div>
+            <div class="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+                <span class="text-xs text-slate-400 uppercase tracking-wider block mb-1">Mobile Number</span>
+                <span id="pMobile" class="text-base font-bold text-slate-850"></span>
+            </div>
+            <div class="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+                <span class="text-xs text-slate-400 uppercase tracking-wider block mb-1">Standard / Course</span>
+                <span id="pCourse" class="text-base font-bold text-slate-850"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- FEES SUMMARY -->
+    <div id="feesBox" class="hidden bg-white border border-slate-100 p-6 rounded-2xl shadow-sm mt-6">
+        <h2 class="text-md font-bold text-slate-850 uppercase tracking-wider mb-4">Fees Summary</h2>
+        <div class="grid grid-cols-3 gap-4 text-center">
+            <div class="bg-slate-50/50 border border-slate-100 p-4 rounded-xl">
+                <p class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Total Fees</p>
+                <p class="text-lg font-extrabold text-slate-850">₹ <span id="totalFee">10000</span></p>
+            </div>
+            <div class="bg-emerald-50/50 border border-emerald-100/50 p-4 rounded-xl">
+                <p class="text-emerald-600 text-xs font-semibold uppercase tracking-wider mb-1">Paid Fees</p>
+                <p class="text-lg font-extrabold text-emerald-800">₹ <span id="paidFee">0</span></p>
+            </div>
+            <div class="bg-rose-50/50 border border-rose-100/50 p-4 rounded-xl">
+                <p class="text-rose-600 text-xs font-semibold uppercase tracking-wider mb-1">Due Fees</p>
+                <p class="text-lg font-extrabold text-rose-800">₹ <span id="dueFee">0</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- RESULT HISTORY -->
+    <div id="resultBox" class="hidden bg-white border border-slate-100 p-6 rounded-2xl shadow-sm mt-6">
+        <h2 class="text-md font-bold text-slate-850 uppercase tracking-wider mb-4">Result History</h2>
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead class="bg-slate-50 border-b border-slate-200">
+                        <tr>
+                            <th class="px-6 py-4 font-semibold text-slate-700">Exam</th>
+                            <th class="px-6 py-4 font-semibold text-slate-700">Date</th>
+                            <th class="px-6 py-4 font-semibold text-slate-700">Marks</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultTable" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div><script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 
@@ -28,6 +97,12 @@ where,
 getDocs
 }
 from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import {
+getAuth,
+onAuthStateChanged,
+signOut
+}
+from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
 
 const firebaseConfig = {
@@ -44,6 +119,23 @@ appId: "1:291322319555:web:9ad5bb47e56ee27b9dc876"
 const app = initializeApp(firebaseConfig);
 
 const db = getFirestore(app);
+const auth = getAuth(app);
+
+// Check login status
+onAuthStateChanged(auth, (user) => {
+if (!user) {
+window.location = "index.html";
+} else {
+document.body.style.display = "";
+}
+});
+
+// Logout handler
+window.logout = function() {
+signOut(auth).then(() => {
+window.location = "index.html";
+});
+};
 
 const yearlyFee = 10000;
 
@@ -151,12 +243,10 @@ resultSnap.forEach(doc=>{
 const r=doc.data();
 
 table.innerHTML+=`
-<tr>
-
-<td class="border p-3">${r.examName}</td>
-<td class="border p-3">${r.examDate}</td>
-<td class="border p-3 font-bold">${r.marks}</td>
-
+<tr class="hover:bg-slate-50/50 transition-colors duration-150">
+<td class="px-6 py-4 border-b border-slate-100 font-semibold text-slate-800">${r.examName}</td>
+<td class="px-6 py-4 border-b border-slate-100 text-slate-650 font-mono text-xs">${r.examDate}</td>
+<td class="px-6 py-4 border-b border-slate-100 font-extrabold text-blue-600">${r.marks}</td>
 </tr>
 `;
 
